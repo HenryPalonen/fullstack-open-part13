@@ -1,0 +1,9 @@
+POST http://localhost:3001/api/blogs
+Content-Type: application/json
+
+{
+"title": "best way to route middleware", 
+"author": "somebody2", 
+"url": "www.apple.com", 
+"likes": 400
+}

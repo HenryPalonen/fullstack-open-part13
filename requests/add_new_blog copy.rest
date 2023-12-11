@@ -1,0 +1,10 @@
+POST http://localhost:3001/api/blogs
+Content-Type: application/json
+
+{
+"title": "Another blog of to route middleware", 
+"author": "Henry Palonen", 
+"url": "www.nasdaq.com", 
+"likes": 1,
+"user": "$2a$10$FV8S6OfAQY7/K/OQcgWkleHIC6Y/UZt.NAOU6ZxyVYjeBfKqfNw3W"
+}
