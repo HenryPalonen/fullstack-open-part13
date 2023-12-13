@@ -1,20 +1,71 @@
+const router = require("express").Router();
+const { Op } = require("sequelize");
+const { Blog } = require("../models/blog");
+
+const blogFinder = async (req, res, next) => {
+  req.blog = await Blog.findByPk(req.params.id);
+  next();
+};
+
+router.get("/", async (req, res) => {
+  const where = {};
+
+  if (req.query.search) {
+    where[Op.or] = [
+      {
+        author: {
+          [Op.substring]: req.query.search,
+        },
+      },
+      {
+        title: {
+          [Op.substring]: req.query.search,
+        },
+      },
+    ];
+  }
+
+  const blogs = await Blog.findAll({
+    where,
+    order: [["likes", "DESC"]],
+  });
+  res.json(blogs);
+});
+
+router.post("/", async (req, res) => {
+  const blog = await Blog.create(req.body);
+  return res.json(blog);
+});
+
+router.put("/:id", blogFinder, async (req, res) => {
+  if (req.blog) {
+    req.blog.likes = req.body.likes;
+    await req.blog.save();
+    res.json(req.blog);
+  } else {
+    res.status(404).end();
+  }
+});
+
+router.delete("/:id", blogFinder, async (req, res) => {
+  if (req.blog) {
+    await req.blog.destroy();
+    res.status(204).end();
+  } else {
+    res.status(404).end();
+  }
+});
+
+module.exports = router;
+
+
+
+/*
 const express = require('express');
 const Blog = require('../models/blog');
 const User = require('../models/user');
 
 const blogsRouter = express.Router();
-/*
-blogsRouter.get('', (request, response) => {
-  Blog.find({})
-    .then(blogs => {
-      response.json(blogs);
-    })
-    .catch(error => {
-      console.log('Error fetching blogs:', error);
-      response.status(500).json({ error: 'Error fetching blogs' });
-    });
-});
-*/
 
 // get all blogs
 blogsRouter.get('/', async (request, response) => {
@@ -27,21 +78,6 @@ blogsRouter.get('/:id', async (request, response) => {
   response.json(blog.toJSON())
 })
 
-/*
-blogsRouter.post('', (request, response) => {
-  const blog = new Blog(request.body);
-
-  blog
-    .save()
-    .then(result => {
-      response.status(201).json(result);
-    })
-    .catch(error => {
-      console.log('Error saving blog:', error);
-      response.status(500).json({ error: 'Error saving blog' });
-    });
-});
-*/
 
 // add blog
 blogsRouter.post('/', async (request, response) => {
@@ -123,3 +159,4 @@ blogsRouter.delete('/:id', (request, response) => {
 });
 
 module.exports = blogsRouter;
+*/
