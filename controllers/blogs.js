@@ -1,6 +1,7 @@
 const router = require("express").Router();
 const { Op } = require("sequelize");
 const { Blog } = require("../models/blog");
+const tokenExtractor = require('../middleware/tokenExtractor');
 
 const blogFinder = async (req, res, next) => {
   req.blog = await Blog.findByPk(req.params.id);
@@ -14,12 +15,12 @@ router.get("/", async (req, res) => {
     where[Op.or] = [
       {
         author: {
-          [Op.substring]: req.query.search,
+          [Op.iLike]: req.query.search,
         },
       },
       {
         title: {
-          [Op.substring]: req.query.search,
+          [Op.iLike]: req.query.search,
         },
       },
     ];
@@ -28,14 +29,20 @@ router.get("/", async (req, res) => {
   const blogs = await Blog.findAll({
     where,
     order: [["likes", "DESC"]],
+    include: {
+      model: User, // Include the user associated with each blog
+      attributes: ['id', 'name', 'username'] // Select specific user attributes to include
+    }
   });
   res.json(blogs);
 });
 
-router.post("/", async (req, res) => {
-  const blog = await Blog.create(req.body);
+router.post("/", tokenExtractor, async (req, res) => {
+  // Assuming the user's ID is included in the request's user object
+  const blog = await Blog.create({ ...req.body, userId: req.user.id });
   return res.json(blog);
 });
+
 
 router.put("/:id", blogFinder, async (req, res) => {
   if (req.blog) {
@@ -47,13 +54,17 @@ router.put("/:id", blogFinder, async (req, res) => {
   }
 });
 
-router.delete("/:id", blogFinder, async (req, res) => {
-  if (req.blog) {
-    await req.blog.destroy();
-    res.status(204).end();
-  } else {
-    res.status(404).end();
+router.delete("/:id", tokenExtractor, blogFinder, async (req, res) => {
+  if (!req.blog) {
+    return res.status(404).send({ error: 'Blog not found' });
   }
+
+  if (req.blog.userId !== req.user.id) {
+    return res.status(401).send({ error: 'Unauthorized to delete this blog' });
+  }
+
+  await req.blog.destroy();
+  res.status(204).end();
 });
 
 module.exports = router;

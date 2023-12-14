@@ -1,54 +1,33 @@
-const bcrypt = require('bcryptjs')
-const usersRouter = require('express').Router()
-const User = require('../models/user')
+const router = require('express').Router();
+const { User } = require('../models/user'); // Adjust the path to your user model
 
-usersRouter.get('/', async (request, response) => {
-  const users = await User.find({}).populate('blogs', { url: 1, title: 1, author: 1 })
-  response.json(users)
-})
+// POST api/users - Add a new user
+router.post('/', async (req, res) => {
+  const user = await User.create(req.body);
+  res.status(201).json(user);
+});
 
-usersRouter.post('/', async (request, response) => {
-  const { username, name, password } = request.body
+// GET api/users - List all users
+router.get('/', async (req, res) => {
+  const users = await User.findAll({
+    include: {
+      model: Blog,
+      attributes: ['id', 'title', 'author', 'url', 'likes'] // Select specific attributes of the blogs
+    }
+  });
+  res.json(users);
+});
 
-  const existingUser = await User.findOne({ username })
-  if (existingUser) {
-    return response.status(400).json({
-      error: 'username must be unique'
-    })
+// PUT api/users/:username - Change a username
+router.put('/:username', async (req, res) => {
+  const user = await User.findOne({ where: { username: req.params.username } });
+  if (user) {
+    user.username = req.body.username;
+    await user.save();
+    res.json(user);
+  } else {
+    res.status(404).send('User not found');
   }
+});
 
-  // missing username or password
-  if (!username) {
-    return response.status(400).json({
-      error: 'username missing'
-    })
-  }
-
-  if (!password) {
-    return response.status(400).json({
-      error: 'password missing'
-    })
-  }
-
-  // if password too short
-  if (password.length < 4) {
-    return response.status(400).json({
-      error:'password must be at least 3 characters'
-    })
-  }
-
-  const saltRounds = 10
-  const passwordHash = await bcrypt.hash(password, saltRounds)
-
-  const user = new User({
-    username,
-    name,
-    passwordHash,
-  })
-
-  const savedUser = await user.save()
-
-  response.status(201).json(savedUser)
-})
-
-module.exports = usersRouter
+module.exports = router;

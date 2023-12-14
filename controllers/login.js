@@ -1,16 +1,19 @@
 const jwt = require('jsonwebtoken')
-const bcrypt = require('bcryptjs')
-const loginRouter = require('express').Router()
-const User = require('../models/user')
-require('dotenv').config()
+const router = require('express').Router()
 
-loginRouter.post('/', async (request, response) => {
-  const { username, password } = request.body
-  console.log(request.body)
-  const user = await User.findOne({ username })
-  const passwordCorrect = user === null
-    ? false
-    : await bcrypt.compare(password, user.passwordHash)
+const { SECRET } = require('../utils/config')
+const User = require('../models/user')
+
+router.post('/', async (request, response) => {
+  const body = request.body
+
+  const user = await User.findOne({
+    where: {
+      username: body.username
+    }
+  })
+
+  const passwordCorrect = body.password === 'secret'
 
   if (!(user && passwordCorrect)) {
     return response.status(401).json({
@@ -20,15 +23,14 @@ loginRouter.post('/', async (request, response) => {
 
   const userForToken = {
     username: user.username,
-    id: user._id,
+    id: user.id,
   }
-  console.log(userForToken)
-  const token = jwt.sign(userForToken, process.env.SECRET)
-  console.log(token)
+
+  const token = jwt.sign(userForToken, SECRET)
 
   response
     .status(200)
     .send({ token, username: user.username, name: user.name })
 })
 
-module.exports = loginRouter
+module.exports = router

@@ -1,9 +1,9 @@
 const express = require('express');
 require('express-async-errors');
-//const authorRouter = require('./controllers/author');
+const authorRouter = require('./controllers/authors');
 const blogRouter = require('./controllers/blogs');
-//const userRouter = require('./controllers/user');
-//const loginRouter = require('./controllers/login');
+const userRouter = require('./controllers/users');
+const loginRouter = require('./controllers/login');
 //const logoutRouter = require('./controllers/logout');
 //const readingListRouter = require('./controllers/readingList');
 const errorHandler = require('./middleware/errorHandler.js');
@@ -18,10 +18,10 @@ const app = express();
 
 app.use(express.json());
 
-//app.use('/api/authors', authorRouter);
+app.use('/api/authors', authorRouter);
 app.use('/api/blogs', blogRouter);
-//app.use('/api/users', userRouter);
-//app.use('/api/login', loginRouter);
+app.use('/api/users', userRouter);
+app.use('/api/login', loginRouter);
 //app.use('/api/logout', logoutRouter);
 //app.use('/api/readinglists', readingListRouter);
 
