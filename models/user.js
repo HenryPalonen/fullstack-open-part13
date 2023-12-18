@@ -1,5 +1,4 @@
 const { Model, DataTypes } = require('sequelize')
-
 const { sequelize } = require('../utils/db')
 
 class User extends Model {}
@@ -31,4 +30,4 @@ User.init({
   modelName: 'user'
 })
 
-module.exports = {User}
+module.exports = User

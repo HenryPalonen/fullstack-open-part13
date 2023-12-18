@@ -1,4 +1,3 @@
-// middleware/tokenExtractor.js
 const jwt = require('jsonwebtoken');
 const { SECRET } = require('../utils/config');
 

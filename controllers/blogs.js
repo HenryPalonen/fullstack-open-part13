@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const { Op } = require("sequelize");
-const { Blog } = require("../models/blog");
+const Blog = require("../models");
 const tokenExtractor = require('../middleware/tokenExtractor');
 
 const blogFinder = async (req, res, next) => {

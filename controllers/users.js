@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { User } = require('../models/user'); // Adjust the path to your user model
+const User = require('../models'); 
 
 // POST api/users - Add a new user
 router.post('/', async (req, res) => {
@@ -29,5 +29,58 @@ router.put('/:username', async (req, res) => {
     res.status(404).send('User not found');
   }
 });
+
+// single user route GET
+router.get('/users/:id', async (req, res, next) => {
+  try {
+    const user = await User.findByPk(req.params.id, {
+      include: {
+        model: ReadingList,
+        include: {
+          model: Blog,
+          attributes: ['id', 'url', 'title', 'author', 'likes', 'year']
+        },
+        where: {}
+      }
+    });
+
+    if (!user) {
+      return res.status(404).send({ error: 'User not found' });
+    }
+
+    // Filter based on the 'read' query parameter
+    if (req.query.read) {
+      const isRead = req.query.read === 'true';
+      user.ReadingLists = user.ReadingLists.filter(rl => rl.isRead === isRead);
+    }
+
+    const userData = {
+      name: user.name,
+      username: user.username,
+      readings: user.ReadingLists.map(readingList => {
+        const blog = readingList.Blog;
+        return {
+          id: blog.id,
+          url: blog.url,
+          title: blog.title,
+          author: blog.author,
+          likes: blog.likes,
+          year: blog.year,
+          readinglists: [
+            {
+              read: readingList.isRead,
+              id: readingList.id
+            }
+          ]
+        };
+      })
+    };
+
+    res.json(userData);
+  } catch (error) {
+    next(error);
+  }
+});
+
 
 module.exports = router;
